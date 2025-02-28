@@ -12,21 +12,10 @@
 # accuracy = sum(y_test == predict)/len(y_test)
 # print(accuracy)
 
+import make_dataset
 
-from bs4 import BeautifulSoup
-import json
-import nltk
-from nltk.tokenize import word_tokenize
+PATH = ["data/spam.json", "data/emails.json"]
+CSV_PATH = "data.csv"
+YEAR = 5
 
-
-def clean_email_content(raw_html):
-    soup = BeautifulSoup(raw_html, "html.parser")
-    return soup.get_text(separator=" ")
-
-with open("data/emails.json", "r", encoding="utf-8") as file:
-    emails = json.load(file)
-
-email_texts = [clean_email_content(email.get("Body", "")) for email in emails]
-
-nltk.download("punkt")
-email_tokens = [word_tokenize(text) for text in email_texts]
+make_dataset.make_dataset(PATH, CSV_PATH, YEAR)

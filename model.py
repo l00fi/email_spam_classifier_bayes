@@ -54,3 +54,10 @@ class NormalNaiveBayes:
         for prob in probs:
             predict.append(class_labels[prob.argmax()])
         return np.array(predict)
+
+# Предыдущий реализация наивного байесовского классификатора есть общий случай
+# нижебудет реализован наивный байесовский классификатор с логнормальным ядром 
+# специально для задачи распознавания спама 
+
+class LogNormalSpamClassifier:
+    pass
