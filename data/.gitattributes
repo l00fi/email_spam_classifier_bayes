@@ -1,0 +1,2 @@
+emails.mbox filter=lfs diff=lfs merge=lfs -text
+spam.mbox filter=lfs diff=lfs merge=lfs -text
