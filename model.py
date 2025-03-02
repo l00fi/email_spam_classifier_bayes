@@ -59,5 +59,54 @@ class NormalNaiveBayes:
 # нижебудет реализован наивный байесовский классификатор с логнормальным ядром 
 # специально для задачи распознавания спама 
 
-class LogNormalSpamClassifier:
-    pass
+class SpamClassifier:
+    def fit(self, data):
+        texts = [(data.iloc[i][0].split(), 
+                  data.iloc[i][1]) for i in range(data.shape[0])]
+
+        all_cleaned_tokens = []  
+        for text in texts:
+            all_cleaned_tokens += text[0] # складываю эти слова в один список
+    
+        unique_tokens = list(set(all_cleaned_tokens)) # с помощью множества избавляюсь от повторений
+    
+        pre_dataframe = {
+            "word": unique_tokens,
+            "spam_count": [1]*len(unique_tokens), # 1 для того, чтобы предотвратить 0 при умножении
+            "ham_count": [1]*len(unique_tokens) # 1 для того, чтобы предотвратить 0 при умножении
+            } 
+        
+        for text in texts:
+            for word in text[0]:
+                if word in pre_dataframe["word"]:
+                    if "Спам" in text[1]:
+                        pre_dataframe["spam_count"][pre_dataframe["word"].index(word)] += 1
+                    if "Спам" not in text[1]:
+                        pre_dataframe["ham_count"][pre_dataframe["word"].index(word)] += 1
+        
+        frequency_data = pd.DataFrame(pre_dataframe)
+
+        frequency_data["p_spam"] = np.array(frequency_data["spam_count"].values) * 1/sum(frequency_data["spam_count"].values) # считаю вероятнось появление каждого отдельного слова
+        frequency_data["p_ham"] = np.array(frequency_data["ham_count"].values) * 1/sum(frequency_data["ham_count"].values) # считаю вероятнось появление каждого отдельного слова
+        probs = np.array(data["sign"].value_counts())/data.shape[0] # вероятность каждого класса
+
+        self.class_proba = {
+            "spam": probs[1],
+            "ham": probs[0] 
+            } # запоминаем вероятности каждого класса
+        self.tokens_prob = frequency_data # запоминаем вероятность каждого слова
+
+        return self
+    
+    def predict(self, text):
+        this_tokens_rows = self.tokens_prob.loc[self.tokens_prob['word'].isin(text)]
+
+        p_spam = np.log(self.class_proba["spam"]) + sum([np.log(p) for p in this_tokens_rows["p_spam"].values])
+        p_ham = np.log(self.class_proba["ham"]) + sum([np.log(p) for p in this_tokens_rows["p_ham"].values])
+
+        if p_spam > p_ham:
+            return "Спам"
+        else:
+            return "Входящие"
+
+ 

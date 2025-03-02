@@ -37,33 +37,13 @@ def clean_tokens(tokens):
     return cleaned_tokens
 
 def create_csv(emails, path):
-    texts = [(
-                email.header.decode_header(e['X-Gmail-Labels'])[0][0].decode('utf-8').split(',')[0], # получаю метки (Входящее, Спам)
-                clean_tokens(word_tokenize(clean_email_content(e.get("Body", "")))) # получаю очищенный от мусора набор слов  
-            ) for e in emails]
+    data = pd.DataFrame([{
+        "text": ' '.join(clean_tokens(word_tokenize(clean_email_content(e.get("Body", ""))))), # получаю очищенный от мусора набор слов
+        "sign": email.header.decode_header(e['X-Gmail-Labels'])[0][0].decode('utf-8').split(',')[0] # получаю метки (Входящее, Спам)
+        } for e in emails])
+    data = data.dropna()
 
-    all_cleaned_tokens = []  
-    for text in texts:
-        all_cleaned_tokens += text[1] # складываю эти слова в один список
-
-    unique_tokens = list(set(all_cleaned_tokens)) # с помощью множества избавляюсь от повторений
-
-    pre_dataframe = {
-        "word": unique_tokens,
-        "spam_count": [1]*len(unique_tokens),
-        "ham_count": [1]*len(unique_tokens)
-        } 
-    
-    for text in texts:
-        for word in text[1]:
-            if word in pre_dataframe["word"]:
-                if "Спам" in text[0]:
-                    pre_dataframe["spam_count"][pre_dataframe["word"].index(word)] += 1
-                if "Спам" not in text[0]:
-                    pre_dataframe["ham_count"][pre_dataframe["word"].index(word)] += 1
-    
-    data = pd.DataFrame(pre_dataframe)
-    data.to_csv(f"{path}", index=False, sep=";")
+    data.to_csv(f"{path}", index=True, sep=";")
 
 def make_dataset(PATH, CSV_PATH, YEAR):
     all_emails = []
@@ -80,5 +60,4 @@ def make_dataset(PATH, CSV_PATH, YEAR):
                 continue
         
         all_emails += correct_emails
-
     create_csv(all_emails, CSV_PATH)
